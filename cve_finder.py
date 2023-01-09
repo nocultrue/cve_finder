@@ -123,7 +123,7 @@ class search_cve():
 
         #获取cve描述
         try:
-            item.cve_description =jsons['description']['description_data'][0].get('value')
+            item.cve_description =jsons['containers']['cna']['descriptions'][0].get('value')
         except Exception as e:
             try:
                 item.cve_description = jsons.get("message")
@@ -140,27 +140,38 @@ class search_cve():
         #获取产品和影响版本
         try:
             #处理json数据
-            name=jsons['affects']['vendor']['vendor_data'][0]['product']['product_data']
+            name=jsons['containers']['cna']['affected'][0]['versions']
             #定义产品名称
-            product_name=[]
+            product_name = []
+            product_name.append(jsons['containers']['cna']['affected'][0].get('product'))
             #受影响版本
-            affect_version=[[]]*len(name)
+            affect_version=[]
             cve_affect=''
             #通过产品名称出发点，寻找受影响版本
-            for l in range(len(name)):
-                for i in name:
-                    if len(name) >= 1:
-                        product_name.append(i.get('product_name'))
-                        for j in i['version']['version_data']:
-                            if 'version_affected' in j:
-                                affect_version[l].append(j.get('version_affected') + j.get('version_value'))
-                            else:
-                                affect_version[l].append(j.get('version_value'))
-            for k in range(len(name)):
-                cve_affect = cve_affect + "产品名称：{}\n影响产品版本：\n{}\n".format(product_name[k], ('\n'.join(affect_version[k])))
+            # for l in range(len(name)):
+                # for i in name:
+                    # if len(name) >= 1:
+                        # product_name.append(i.get('product_name'))
+                        # for j in i['version']['version_data']:
+                            # if 'version_affected' in j:
+                                # affect_version[l].append(j.get('version_affected') + j.get('version_value'))
+                            # else:
+                                # affect_version[l].append(j.get('version_value'))
+            for	i in name:
+               if len(name) >= 1:
+                        if 'affected' in i:
+                            affect_version.append(i.get('version') + i.get('status'))
+                        else:
+                            affect_version.append(i.get('version'))
+            cve_affect = cve_affect + "产品名称：{}\n影响产品版本：\n{}\n".format(product_name[0], ('\n'.join(affect_version)))
+
+								
+            # for k in range(len(name)):
+                # cve_affect = cve_affect + "产品名称：{}\n影响产品版本：\n{}\n".format(product_name[k], ('\n'.join(affect_version[k])))
 
             item.cve_affect=cve_affect
-        except:
+        except Exception as e:
+             print(e)
              item.cve_affect = '空'
         # 链接：
         try:
@@ -174,6 +185,7 @@ if __name__ == '__main__':
     if len(sys.argv)==3:
         time_start=time.time()
         run=search_cve(sys.argv[1], sys.argv[2])
+        # run = search_cve('E:\cola\cve_finder\finder\cve.txt', '工行排查')
         banner.banner()
         run.duoxian()
         time_end=time.time()
